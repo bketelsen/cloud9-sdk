@@ -4,7 +4,8 @@ MAINTAINER Raul Sanchez <rawmind@gmail.com>
 
 ENV SERVICE_HOME=/opt/cloud9 \
     SERVICE_URL=https://github.com/c9/core.git \
-    SERVICE_WORK=/workspace
+    SERVICE_WORK=/workspace \
+    GOPATH=/workspace
 
 RUN mkdir -p $SERVICE_HOME $SERVICE_WORK && \
     apt-get update && \
@@ -17,12 +18,18 @@ RUN mkdir -p $SERVICE_HOME $SERVICE_WORK && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* 
 
+ENV GOLANG_VERSION 1.8
+ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
+
+RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz \
+    && tar -C /usr/local -xzf golang.tar.gz \
+    && rm golang.tar.gz
+RUN echo "PATH=$PATH:/usr/local/go/bin:/workdir/bin" >> ~/.bashrc
 ADD root /
 RUN chmod +x /tmp/*.sh 
 
-WORKDIR $SERVICE_WORK
-
+WORKDIR /workdir
 EXPOSE 8080
 
 ENTRYPOINT ["/tmp/start.sh"]
-CMD ["--listen 0.0.0.0 -p 8080 -w $SERVICE_WORK"]
+CMD ["--listen 0.0.0.0 --collab -a gophercon:gophercon -p 8080 -w /workspace"] 
